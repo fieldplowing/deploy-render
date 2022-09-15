@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: apiMemo
+  description: TypeScript app
+  version: 1.0.0
+servers:
+- url: /api/v1
+tags:
+- name: Memo
+  description: Simple memo endpoints
+- name: User
+  description: Simple user endpoints
+
+paths:
+  /memo:
+    get:
+      tags:
+      - Memo
+      responses:
+        200:
+          description: Return all memo
+          content: {}
+    post:
+      tags:
+      - Memo
+      description: Create a new memo
+      requestBody:
+        description: memo
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoBody'
+        required: true
+      responses:
+        201:
+          description: Returns a memo
+          content: {}
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags:
+      - Memo
+      description: Update a memo
+      requestBody:
+        description: memo
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoBody'
+                # $ref: "#/components/schemas/Memos"
+      # required: true
+      responses:
+        201:
+          description: Returns a memo
+          content: {}
+        default:
+          description: 予期しないエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /memo/{id}:
+    get:
+      tags:
+      - Memo
+      parameters:
+      - name: id
+        in: path
+        description: 取得するメモのID
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: 指定したIDのメモを返します
+          content: {}
+        404:
+          description: Memo not found
+          content: {}
+        default:
+          description: 予期しないエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+      - Memo
+      parameters:
+      - name: id
+        in: path
+        description: 削除するメモのID
+        required: true
+        schema:
+          type: integer
+      responses:
+        400:
+          description: 無効なIDが指定されました
+          content: {}
+        404:
+          description: Memo not found
+          content: {}
+
+        default:
+          description: 予期しないエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /user:
+    get:
+      tags:
+      - User
+      responses:
+        200:
+          description: Return all user
+          content: {}
+
+  /user/{id}:
+    delete:
+      tags:
+      - User
+      parameters:
+      - name: id
+        in: path
+        description: 削除するUserのID
+        required: true
+        schema:
+          type: string
+      responses:
+        400:
+          description: 無効なIDが指定されました
+          content: {}
+        404:
+          description: User not found
+          content: {}
+        default:
+          description: 予期しないエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      tags:
+      - User
+      parameters:
+      - name: id
+        in: path
+        description: 作成するUserのID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Memos'
+      responses:
+        201:
+          description: 作成されました
+          content: {}
+        default:
+          description: 予期しないエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    get:
+      tags:
+      - User
+      parameters:
+      - name: id
+        in: path
+        description: 取得するUserのid
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: 指定したUserのファイルを返します
+          content: {}
+        404:
+          description: User not found
+          content: {}
+        default:
+          description: 予期しないエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+
+components:
+  schemas:
+    Memos:
+      type: array
+      items:
+            $ref: '#/components/schemas/Memo'
+    MemoBody:
+      required:
+      - title
+      type: object
+      properties:
+        title:
+          type: string
+    Memo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

@@ -4,27 +4,25 @@
   "description": "A sample Node.js app using Express 4", 
   "engines": { 
     "node": "16.x" 
-  },   "main": "dist/index.js",
+  },   
+  "main": "bin/index.js",
   "scripts": {
-    "start": "node dist/index.js"
+    "start": "node bin/index.js"
   },
   "dependencies": { 
-    "body-parser": "^1.19.2",
+    "body-parser": "^1.20.0",
     "cookie-parser": "^1.4.6",
-    "dotenv": "^16.0.0",
-    "express": "^4.17.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
     "express-openapi-validator": "^4.13.8",
-    "pg": "^8.7.3",
-    "pino": "^7.8.1"
+    "fs-extra": "^10.1.0",
+    "pg": "^8.8.0",
+    "pino": "^8.4.2"
   }, 
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fieldplowing/heroku-model.git"
-  },
   "keywords": [ 
     "node", 
-    "heroku", 
     "express" 
   ], 
-  "license": "ISC"
+  "license": "MIT"
 }
