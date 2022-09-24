@@ -8,19 +8,20 @@ const fs_extra_1 = require("fs-extra");
 const path_1 = __importDefault(require("path"));
 const logger_1 = __importDefault(require("../../common/logger"));
 // const Dir = './public/userdata';
-const Dir = path_1.default.normalize(__dirname + '/../../public/userdata');
+const Dir = path_1.default.normalize(__dirname + '/../../../public/userdata');
 class UserService {
     async all() {
         logger_1.default.info('read all user-data name');
         // ディレクトリが存在することを確認（存在しない場合は、作成）
         (0, fs_extra_1.ensureDirSync)(Dir);
         // ファイル名一覧を取得
-        let dirList = new Array();
+        let dirList = [];
         try {
             dirList = (0, fs_extra_1.readdirSync)(Dir, {
                 withFileTypes: true,
-            }).filter(dirent => dirent.isFile())
-                .map(dirent => dirent.name);
+            })
+                .filter((dirent) => dirent.isFile())
+                .map((dirent) => dirent.name);
         }
         catch (err) {
             logger_1.default.debug(err.message);

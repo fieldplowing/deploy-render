@@ -23,17 +23,17 @@ paths:
     post:
       tags:
       - Memo
-      description: Create a new memo
+      description: Create new memos
       requestBody:
-        description: memo
+        description: memos
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MemoBody'
+              $ref: '#/components/schemas/Memos'
         required: true
       responses:
         201:
-          description: Returns a memo
+          description: 作成されました
           content: {}
         default:
           description: unexpected error
@@ -41,29 +41,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    put:
+    delete:
       tags:
       - Memo
-      description: Update a memo
-      requestBody:
-        description: memo
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MemoBody'
-                # $ref: "#/components/schemas/Memos"
-      # required: true
       responses:
-        201:
-          description: Returns a memo
+        200:
+          description: delete all memo
           content: {}
         default:
-          description: 予期しないエラー
+          description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
   /memo/{id}:
     get:
       tags:
@@ -74,7 +64,7 @@ paths:
         description: 取得するメモのID
         required: true
         schema:
-          type: integer
+          type: string
       responses:
         200:
           description: 指定したIDのメモを返します
@@ -88,6 +78,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    put:
+      tags:
+      - Memo
+      parameters:
+      - name: id
+        in: path
+        description: 作成するメモのID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Memo'
+      responses:
+        201:
+          description: 作成されました
+          content: {}
+        default:
+          description: 予期しないエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
     delete:
       tags:
       - Memo
@@ -97,7 +113,7 @@ paths:
         description: 削除するメモのID
         required: true
         schema:
-          type: integer
+          type: string
       responses:
         400:
           description: 無効なIDが指定されました
@@ -112,6 +128,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
   /user:
     get:
       tags:

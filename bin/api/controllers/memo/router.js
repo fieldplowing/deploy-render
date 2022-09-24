@@ -7,9 +7,10 @@ const express_1 = __importDefault(require("express"));
 const controller_1 = __importDefault(require("./controller"));
 exports.default = express_1.default
     .Router()
-    .delete('/:id', controller_1.default.delete)
-    .put('/', controller_1.default.update)
-    .post('/', controller_1.default.create)
     .get('/', controller_1.default.all)
-    .get('/:id', controller_1.default.byId);
+    .post('/', controller_1.default.create)
+    .delete('/', controller_1.default.clear)
+    .get('/:id', controller_1.default.byId)
+    .put('/:id', controller_1.default.update)
+    .delete('/:id', controller_1.default.delete);
 //# sourceMappingURL=router.js.map

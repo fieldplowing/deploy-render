@@ -4,149 +4,89 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemoService = void 0;
+// import J from '../../public/userdata/testId.json';
 const logger_1 = __importDefault(require("../../common/logger"));
-// import Data from '../../../test/export.json';
-const pg_1 = __importDefault(require("pg"));
+const mongodb_1 = require("mongodb");
 const database_url = process.env.DATABASE_URL || '';
-const temp = database_url.split('/');
-const schema = temp[temp.length - 1];
-const pool = new pg_1.default.Pool({
-    connectionString: database_url,
-    ssl: {
-        // require: true,
-        rejectUnauthorized: false,
-    },
-    idleTimeoutMillis: 3 * 86400 * 1000,
+const client = new mongodb_1.MongoClient(database_url, {
+    serverApi: mongodb_1.ServerApiVersion.v1,
 });
+const databaseName = 'memos';
+const collectionName = '_views';
+// Use This Database
+const db = client.db(databaseName);
+// Use This Collection
+const collection = db.collection(collectionName); // Like Table
+// interface Memo {
+//   _id: ObjectId;
+//   id: number;
+//   status: string;
+//   category: string;
+//   title: string;
+//   content: string;
+//   accessCount: number;
+//   updateCount: number;
+//   createdAt: string;
+//   updatedAt: string;
+// }
 class MemoService {
     async all() {
-        logger_1.default.info(`fetch all with schema ${schema}`);
-        let rows = [];
-        // コネクション取得
-        const client = await pool.connect();
-        try {
-            // クエリ発行
-            // const result: QueryResult = await client.query('SELECT NOW()');
-            const result = await client.query('SELECT * FROM memo ORDER BY id');
-            rows = result.rows;
-        }
-        catch (e) {
-            logger_1.default.error({ e }, 'fetch all error!!');
-        }
-        finally {
-            // コネクション返却
-            client.release();
-        }
-        return Promise.resolve(rows);
+        logger_1.default.info(`fetch all memo`);
+        // Connect
+        await client.connect();
+        // Find Documents
+        const findResult = await collection
+            .find({})
+            .sort({ updatedAt: -1 })
+            .toArray();
+        // console.log('Found Documents :', findResult);
+        client.close();
+        return Promise.resolve(findResult);
     }
     async byId(id) {
         logger_1.default.info(`fetch memo with id ${id}`);
-        let rows = [];
-        // コネクション取得
-        const client = await pool.connect();
-        try {
-            // クエリ発行
-            const sql = 'SELECT * FROM memo WHERE id = $1';
-            const query = { text: sql, values: [id] };
-            logger_1.default.debug(query, 'query');
-            const result = await client.query(query);
-            rows = result.rows;
-        }
-        catch (e) {
-            logger_1.default.error({ e }, 'fetch byId error!!');
-        }
-        finally {
-            // コネクション返却
-            client.release();
-        }
-        return Promise.resolve(rows);
+        // Connect
+        await client.connect();
+        // Find Documents
+        const findResult = await collection.findOne({ _id: new mongodb_1.ObjectId(id) });
+        client.close();
+        return Promise.resolve(findResult);
     }
     async create(req) {
         logger_1.default.info(`create memo`);
-        // req.bodyから登録データを取得
-        // const item: Memo = req.body;
-        // const queryColums =
-        //   '(status,category,title,content,accessCount,updateCount,createdAt,updatedAt)';
-        // const queryValues = ' VALUES($1,$2,$3,$4,$5,$6,$7,$8)';
-        const queryText = 'INSERT INTO memo ' +
-            '(status,category,title,content,accessCount,updateCount,createdAt,updatedAt) ' +
-            'VALUES($1,$2,$3,$4,$5,$6,$7,$8)';
-        const queryValues = [
-            req.body.status,
-            req.body.category,
-            req.body.title,
-            req.body.content,
-            0,
-            0,
-            req.body.createdAt,
-            req.body.updatedAt,
-        ];
-        logger_1.default.debug(queryText, 'queryText');
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            await client.query(queryText, queryValues);
-            await client.query('COMMIT');
-        }
-        catch (e) {
-            await client.query('ROLLBACK');
-            logger_1.default.error({ e }, 'create error!!');
-        }
-        finally {
-            client.release();
-        }
-        return Promise.resolve(req.body);
+        // Connect
+        await client.connect();
+        // Insert Documents
+        const result = await collection.insertMany(req.body);
+        client.close();
+        return Promise.resolve(result.insertedIds[0].toString());
     }
-    async update(req) {
-        logger_1.default.info(`update memo with id ${req.body.id}`);
-        const queryText = 'UPDATE memo ' +
-            'SET status=$1,category=$2,title=$3,content=$4,accessCount=$5,updateCount=$6,updatedAt=$7 ' +
-            'WHERE id = $8';
-        const queryValues = [
-            req.body.status,
-            req.body.category,
-            req.body.title,
-            req.body.content,
-            req.body.accessCount,
-            req.body.updateCount,
-            req.body.updatedAt,
-            req.body.id,
-        ];
-        logger_1.default.debug(queryText, 'queryText');
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            await client.query(queryText, queryValues);
-            await client.query('COMMIT');
-        }
-        catch (e) {
-            await client.query('ROLLBACK');
-            logger_1.default.error({ e }, 'update error!!');
-        }
-        finally {
-            client.release();
-        }
-        return Promise.resolve(req.body);
+    async update(id, req) {
+        logger_1.default.info(`update memo with id ${id}`);
+        // Connect
+        await client.connect();
+        // Update Documents (Like Row)
+        await collection.replaceOne({ _id: new mongodb_1.ObjectId(id) }, req.body);
+        client.close();
+        return Promise.resolve(id);
     }
     async delete(id) {
         logger_1.default.info(`delete memo with id ${id}`);
-        const sql = 'DELETE FROM memo WHERE id = $1';
-        const query = { text: sql, values: [id] };
-        logger_1.default.debug(query, 'query');
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            await client.query(query);
-            await client.query('COMMIT');
-        }
-        catch (e) {
-            await client.query('ROLLBACK');
-            logger_1.default.error({ e }, 'delete error!!');
-        }
-        finally {
-            client.release();
-        }
+        // Connect
+        await client.connect();
+        // Delete Documents (Like Row)
+        await collection.deleteOne({ _id: new mongodb_1.ObjectId(id) });
+        client.close();
         return Promise.resolve(id);
+    }
+    async clear() {
+        logger_1.default.info(`clear memo`);
+        // Connect
+        await client.connect();
+        // Delete Documents
+        await collection.deleteMany({});
+        client.close();
+        return Promise.resolve(`clear`);
     }
 }
 exports.MemoService = MemoService;

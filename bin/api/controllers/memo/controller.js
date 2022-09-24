@@ -10,8 +10,7 @@ class Controller {
         memo_service_1.default.all().then((r) => res.status(200).json(r));
     }
     byId(req, res) {
-        const id = Number.parseInt(req.params['id']);
-        memo_service_1.default.byId(id).then((r) => {
+        memo_service_1.default.byId(req.params['id']).then((r) => {
             if (r)
                 res.json(r);
             else
@@ -27,7 +26,7 @@ class Controller {
         });
     }
     update(req, res) {
-        memo_service_1.default.update(req).then((r) => {
+        memo_service_1.default.update(req.params['id'], req).then((r) => {
             if (r)
                 res.status(201).json(r);
             else
@@ -35,8 +34,15 @@ class Controller {
         });
     }
     delete(req, res) {
-        const id = Number.parseInt(req.params['id']);
-        memo_service_1.default.delete(id).then((r) => {
+        memo_service_1.default.delete(req.params['id']).then((r) => {
+            if (r)
+                res.json(r);
+            else
+                res.status(404).end();
+        });
+    }
+    clear(_, res) {
+        memo_service_1.default.clear().then((r) => {
             if (r)
                 res.json(r);
             else

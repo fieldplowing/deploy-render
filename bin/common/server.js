@@ -27,7 +27,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const http_1 = __importDefault(require("http"));
@@ -40,11 +39,6 @@ const app = (0, express_1.default)();
 class ExpressServer {
     constructor() {
         const root = path_1.default.normalize(__dirname + '/../..');
-        app.use((0, cors_1.default)({
-            origin: 'http://localhost:4200',
-            credentials: true,
-            optionsSuccessStatus: 200, //レスポンスstatusを200に設定
-        }));
         app.use(body_parser_1.default.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
         app.use(body_parser_1.default.urlencoded({
             extended: true,
