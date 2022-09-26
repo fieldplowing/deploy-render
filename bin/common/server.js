@@ -51,6 +51,7 @@ class ExpressServer {
         const validateResponses = !!(process.env.OPENAPI_ENABLE_RESPONSE_VALIDATION &&
             process.env.OPENAPI_ENABLE_RESPONSE_VALIDATION.toLowerCase() === 'true');
         // app.use(process.env.OPENAPI_SPEC || '/spec', express.static(apiSpec));
+        app.use('/*', express_1.default.static(path_1.default.join(__dirname, './public/index.html')));
         app.use(OpenApiValidator.middleware({
             apiSpec,
             validateResponses,
