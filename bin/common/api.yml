@@ -10,6 +10,8 @@ tags:
   description: Simple memo endpoints
 - name: User
   description: Simple user endpoints
+- name: Health
+  description: Simple health endpoints
 
 paths:
   /memo:
@@ -213,6 +215,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /health:
+    get:
+      tags:
+      - Health
+      responses:
+        200:
+          description: Return health
+          content: {}
+
 
 components:
   schemas:
@@ -220,13 +231,6 @@ components:
       type: array
       items:
             $ref: '#/components/schemas/Memo'
-    MemoBody:
-      required:
-      - title
-      type: object
-      properties:
-        title:
-          type: string
     Memo:
       type: object
       properties:
