@@ -1,4 +1,3 @@
-/// <reference types="express" />
-import './common/env';
+import './common/env.js';
 declare const _default: import("express").Application;
 export default _default;

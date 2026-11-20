@@ -1,248 +1,311 @@
 openapi: 3.0.3
 info:
   title: apiMemo
-  description: TypeScript app
+  description: TypeScript app with Express 5, MongoDB, and Pino.
   version: 1.0.0
 servers:
-- url: /api/v1
+  - url: /api/v1
+
 tags:
-- name: Memo
-  description: Simple memo endpoints
-- name: User
-  description: Simple user endpoints
-- name: Health
-  description: Simple health endpoints
+  - name: Memo
+    description: Simple memo endpoints
+  - name: Health
+    description: Simple health endpoints
 
 paths:
   /memo:
     get:
       tags:
-      - Memo
+        - Memo
+      summary: メモ一覧の取得
       responses:
         200:
           description: Return all memo
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Memos'
+        default:
+          $ref: '#/components/responses/DefaultError'
     post:
       tags:
-      - Memo
+        - Memo
+      summary: 新しいメモの作成
       description: Create new memos
       requestBody:
         description: memos
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Memos'
-        required: true
+              $ref: '#/components/schemas/MemosCreateInput'
       responses:
         201:
           description: 作成されました
-          content: {}
-        default:
-          description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/MongoIdResponse'
+        default:
+          $ref: '#/components/responses/DefaultError'
     delete:
       tags:
-      - Memo
+        - Memo
+      summary: すべてのメモを削除
       responses:
         200:
           description: delete all memo
-          content: {}
-        default:
-          description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                type: object
+                properties:
+                  acknowledged:
+                    type: boolean
+                  deletedCount:
+                    type: integer
+        default:
+          $ref: '#/components/responses/DefaultError'
+
   /memo/{id}:
     get:
       tags:
-      - Memo
+        - Memo
+      summary: ID指定によるメモ取得
       parameters:
-      - name: id
-        in: path
-        description: 取得するメモのID
-        required: true
-        schema:
-          type: string
+        - $ref: '#/components/parameters/MongoDBObjectId'
       responses:
         200:
           description: 指定したIDのメモを返します
-          content: {}
-        404:
-          description: Memo not found
-          content: {}
-        default:
-          description: 予期しないエラー
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Memo'
+        404:
+          $ref: '#/components/responses/404NotFound'
+        default:
+          $ref: '#/components/responses/DefaultError'
     put:
       tags:
-      - Memo
+        - Memo
+      summary: メモの更新
       parameters:
-      - name: id
-        in: path
-        description: 作成するメモのID
-        required: true
-        schema:
-          type: string
+        - $ref: '#/components/parameters/MongoDBObjectId'
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Memo'
+              $ref: '#/components/schemas/MemoUpdateInput'
       responses:
         201:
-          description: 作成されました
-          content: {}
-        default:
-          description: 予期しないエラー
+          description: 作成または更新されました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/MongoIdResponse'
+        default:
+          $ref: '#/components/responses/DefaultError'
     delete:
       tags:
-      - Memo
+        - Memo
+      summary: メモの削除
       parameters:
-      - name: id
-        in: path
-        description: 削除するメモのID
-        required: true
-        schema:
-          type: string
-      responses:
-        400:
-          description: 無効なIDが指定されました
-          content: {}
-        404:
-          description: Memo not found
-          content: {}
-
-        default:
-          description: 予期しないエラー
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /user:
-    get:
-      tags:
-      - User
+        - $ref: '#/components/parameters/MongoDBObjectId'
       responses:
         200:
-          description: Return all user
-          content: {}
-
-  /user/{id}:
-    delete:
-      tags:
-      - User
-      parameters:
-      - name: id
-        in: path
-        description: 削除するUserのID
-        required: true
-        schema:
-          type: string
-      responses:
-        400:
-          description: 無効なIDが指定されました
-          content: {}
-        404:
-          description: User not found
-          content: {}
-        default:
-          description: 予期しないエラー
+          description: 削除されました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                type: object
+                properties:
+                  acknowledged:
+                    type: boolean
+                  deletedCount:
+                    type: integer
+        404:
+          $ref: '#/components/responses/404NotFound'
+        default:
+          $ref: '#/components/responses/DefaultError'
 
-    put:
+    # 💡 追加: 部分更新（PATCH）エンドポイント
+    patch:
       tags:
-      - User
+        - Memo
+      summary: メモの部分更新
+      description: 指定されたフィールドのみを更新します（partialUpdateに対応）
       parameters:
-      - name: id
-        in: path
-        description: 作成するUserのID
-        required: true
-        schema:
-          type: string
+        - $ref: '#/components/parameters/MongoDBObjectId'
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Memos'
-      responses:
-        201:
-          description: 作成されました
-          content: {}
-        default:
-          description: 予期しないエラー
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-    get:
-      tags:
-      - User
-      parameters:
-      - name: id
-        in: path
-        description: 取得するUserのid
-        required: true
-        schema:
-          type: string
+              $ref: '#/components/schemas/MemoPartialUpdateInput'
       responses:
         200:
-          description: 指定したUserのファイルを返します
-          content: {}
-        404:
-          description: User not found
-          content: {}
-        default:
-          description: 予期しないエラー
+          description: 更新されました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/MongoIdResponse'
+        404:
+          $ref: '#/components/responses/404NotFound'
+        default:
+          $ref: '#/components/responses/DefaultError'
 
   /health:
     get:
       tags:
-      - Health
+        - Health
+      summary: ヘルスチェック
       responses:
         200:
           description: Return health
-          content: {}
-
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
 
 components:
+  parameters:
+    MongoDBObjectId:
+      name: id
+      in: path
+      description: MongoDBのObjectId (24桁の16進数文字列)
+      required: true
+      schema:
+        type: string
+        pattern: '^[0-9a-fA-F]{24}$'
+
+  responses:
+    404NotFound:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DefaultError:
+      description: 予期しないエラー、またはバリデーションエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
   schemas:
     Memos:
       type: array
       items:
-            $ref: '#/components/schemas/Memo'
-    Memo:
+        $ref: '#/components/schemas/Memo'
+
+    # 💡 一括作成用の配列スキーマを追加
+    MemosCreateInput:
+      type: array
+      items:
+        $ref: '#/components/schemas/MemoCreateInput'
+
+    # メモ作成時の入力バリデーション用
+    MemoCreateInput:
       type: object
+      required:
+        - title
+        - content
+      additionalProperties: false
       properties:
-        id:
-          type: integer
-          format: int64
         title:
+          type: string
+          minLength: 1
+        content:
           type: string
         status:
           type: string
         category:
           type: string
+
+    # メモ更新時の入力バリデーション用
+    MemoUpdateInput:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+
+    # 💡 追加: 部分更新時の入力バリデーション用スキーマ
+    MemoPartialUpdateInput:
+      type: object
+      additionalProperties: false
+      minProperties: 1 # 少なくとも1つのフィールドが送信されることを期待する場合
+      properties:
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+
+    # 💡 追加: 作成・更新時に返却する24桁のID文字列スキーマ
+    MongoIdResponse:
+      type: string
+      pattern: '^[0-9a-fA-F]{24}$'
+      example: '6731a2b3c4d5e6f7a8b9c0d1'
+
+    # データベース出力・レスポンス用
+    Memo:
+      type: object
+      required:
+        - _id
+        - title
+        - content
+      properties:
+        _id:
+          type: string
+          pattern: '^[0-9a-fA-F]{24}$'
+          readOnly: true
+        title:
+          type: string
+        content:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+        accessCount:
+          type: integer
+          minimum: 0
+          readOnly: true
+          description: 閲覧回数（サーバー自動カウント）
+        updateCount:
+          type: integer
+          minimum: 0
+          readOnly: true
+          description: 更新回数（サーバー自動カウント）
+        createdAt:
+          type: string
+          example: '2026/11/11 16:30:00'
+          readOnly: true
+          description: 作成日時（yyyy/MM/dd HH:mm:ss）
+        updatedAt:
+          type: string
+          example: '2026/11/11 16:30:00'
+          readOnly: true
+          description: 更新日時（yyyy/MM/dd HH:mm:ss）
+
+    # express-openapi-validatorの標準出力構造に合わせたエラー形式
     Error:
       type: object
       required:
@@ -252,5 +315,22 @@ components:
         code:
           type: integer
           format: int32
+          description: HTTPステータスコード
         message:
           type: string
+          description: エラーの概要
+        errors:
+          type: array
+          description: express-openapi-validator が検知した詳細な不整合リスト
+          items:
+            type: object
+            required:
+              - path
+              - message
+            properties:
+              path:
+                type: string
+                description: エラーが発生したパラメータ・フィールドのパス
+              message:
+                type: string
+                description: 具体的なエラー内容

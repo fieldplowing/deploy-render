@@ -1,2 +1,2 @@
-declare const _default: import("express-serve-static-core").Router;
-export default _default;
+declare const router: import("express-serve-static-core").Router;
+export default router;

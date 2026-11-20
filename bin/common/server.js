@@ -1,73 +1,63 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const path_1 = __importDefault(require("path"));
-const body_parser_1 = __importDefault(require("body-parser"));
-const http_1 = __importDefault(require("http"));
-const os_1 = __importDefault(require("os"));
-const cookie_parser_1 = __importDefault(require("cookie-parser"));
-const logger_1 = __importDefault(require("./logger"));
-const error_handler_1 = __importDefault(require("../api/middlewares/error.handler"));
-const OpenApiValidator = __importStar(require("express-openapi-validator"));
-const app = (0, express_1.default)();
-class ExpressServer {
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import http from 'http';
+import os from 'os';
+import cors from 'cors';
+import * as OpenApiValidator from 'express-openapi-validator';
+import l from './logger.js';
+import errorHandler from '../api/middlewares/error.handler.js';
+const app = express();
+// ESM環境で __dirname と root パスを安全に取得する定義
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+export default class ExpressServer {
     constructor() {
-        const root = path_1.default.normalize(__dirname + '/../..');
-        app.use(body_parser_1.default.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
-        app.use(body_parser_1.default.urlencoded({
-            extended: true,
-            limit: process.env.REQUEST_LIMIT || '100kb',
-        }));
-        app.use(body_parser_1.default.text({ limit: process.env.REQUEST_LIMIT || '100kb' }));
-        app.use((0, cookie_parser_1.default)(process.env.SESSION_SECRET));
-        app.use(express_1.default.static(`${root}/public`));
-        const apiSpec = path_1.default.join(__dirname, 'api.yml');
+        // 💡 開発時（フロント4200番と別起動する時）のみCORSを有効化
+        if (process.env.NODE_ENV !== 'production') {
+            app.use(cors({
+                origin: 'http://127.0.0.1:4200', //アクセス許可するオリジン👈 フロントエンドのURL
+                credentials: true, //レスポンスヘッダーにAccess-Control-Allow-Credentials追加👈 ログイン情報
+                optionsSuccessStatus: 200, //レスポンスstatusを200に設定
+            }));
+        }
+        // 💡 Pinoによる簡易リクエストログ記録
+        app.use((req, _res, next) => {
+            l.info({ method: req.method, url: req.url }, 'Incoming Request');
+            next();
+        });
+        // 💡 改善：body-parser を排除し、Express 5 標準のパーサーを使用
+        const requestLimit = process.env.REQUEST_LIMIT || '100kb';
+        app.use(express.json({ limit: requestLimit }));
+        app.use(express.urlencoded({ extended: true, limit: requestLimit }));
+        app.use(express.text({ limit: requestLimit }));
+        // 静的ファイルの配信設定（deploy-render/public または apiMemo-MongoDB/public を確実に指す）
+        app.use(express.static(path.resolve(process.cwd(), 'public')));
+        // OpenAPI Validator の設定
+        const apiSpec = path.join(__dirname, 'api.yml'); // server/common/api.yml を正確に指定
         const validateResponses = !!(process.env.OPENAPI_ENABLE_RESPONSE_VALIDATION &&
             process.env.OPENAPI_ENABLE_RESPONSE_VALIDATION.toLowerCase() === 'true');
-        // app.use(process.env.OPENAPI_SPEC || '/spec', express.static(apiSpec));
         app.use(OpenApiValidator.middleware({
             apiSpec,
+            validateRequests: true,
             validateResponses,
-            ignorePaths: (p) => !p.startsWith("/api/v1"),
-            // ignorePaths: /.*\/spec(\/|$)/,
+            // バリデーションを除外したいパスを正規表現、または関数で指定
+            // 今回は /health や静的ファイル（public）などを弾くため、/api/v1 以外を除外
+            // /api/v1/health へのアクセスのみバリデーションをスキップする
+            // ignorePaths: (p: string) => !p.startsWith('/api/v1'),
+            ignorePaths: (p) => p === '/api/v1/health' || !p.startsWith('/api/v1'),
         }));
     }
     router(routes) {
         routes(app);
-        app.use(error_handler_1.default);
+        // エラーハンドラーをルーティングの直後に配置（Express 5でも必須）
+        app.use(errorHandler);
         return this;
     }
     listen(port) {
-        const welcome = (p) => () => logger_1.default.info(`up and running in ${process.env.NODE_ENV || 'development'} @: ${os_1.default.hostname()} on port: ${p}}`);
-        http_1.default.createServer(app).listen(port, welcome(port));
+        const welcome = (p) => () => l.info(`up and running in ${process.env.NODE_ENV || 'development'} @: ${os.hostname()} on port: ${p}}`);
+        http.createServer(app).listen(port, welcome(port));
         return app;
     }
 }
-exports.default = ExpressServer;
 //# sourceMappingURL=server.js.map

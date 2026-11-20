@@ -1,29 +1,27 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "target": "ES2019",
-    "lib": ["ES2020"],
-    "strict": true,
-    "module": "commonjs",
+    /* 言語と環境（Node.js v22+ / TypeScript 6.0 向け） */
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    /* スクリプト実行専用（.js や .d.ts を出力しない） */
+    "noEmit": true,
+    "resolveJsonModule": true,
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "sourceMap": true,
-    "declaration": true,
-    "moduleResolution": "node",
+
+    /* 型チェックと厳格性 */
+    "strict": true,
     "useUnknownInCatchVariables": false,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "strictNullChecks": true,
     "noUnusedParameters": true,
     "noUnusedLocals": false,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": false,
-    "strictPropertyInitialization":false,
-    "alwaysStrict": true,
-    "outDir": "dist",
-    "typeRoots": ["node_modules/@types"],
-    "resolveJsonModule": true,
-    "baseUrl": "."
-
+    "noFallthroughCasesInSwitch": false
   },
+  "include": ["sync.ts"],
+  "exclude": ["node_modules", "bin", "public"]
 }

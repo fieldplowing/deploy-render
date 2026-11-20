@@ -1,16 +1,12 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const controller_1 = __importDefault(require("./controller"));
-exports.default = express_1.default
+import express from 'express';
+import controller from './controller.js';
+export default express
     .Router()
-    .get('/', controller_1.default.all)
-    .post('/', controller_1.default.create)
-    .delete('/', controller_1.default.clear)
-    .get('/:id', controller_1.default.byId)
-    .put('/:id', controller_1.default.update)
-    .delete('/:id', controller_1.default.delete);
+    .get('/', controller.all)
+    .post('/', controller.create)
+    .delete('/', controller.clear)
+    .get('/:id', controller.byId)
+    .put('/:id', controller.update)
+    .patch('/:id', controller.partialUpdate) // 💡 この1行を追加
+    .delete('/:id', controller.delete);
 //# sourceMappingURL=router.js.map

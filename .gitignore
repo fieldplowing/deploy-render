@@ -1,4 +1,19 @@
-# Node build artifacts 
-node_modules 
-# Local development 
-*.env 
+# Dependencies
+node_modules/
+
+# Local environment variables (セキュリティ対策：絶対にコミットしない)
+.env
+*.env
+.env.*
+
+# ソースマップと型定義ファイルは本番デプロイに不要なため除外
+*.map
+*.d.ts
+
+# Package manager lockfile conflict prevention
+# Yarn で統一するため npm のロックファイルは除外する
+package-lock.json
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
