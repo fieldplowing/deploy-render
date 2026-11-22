@@ -1,11 +1,5 @@
 import express from 'express';
 import path from 'path';
-// import { fileURLToPath } from 'url';
-// 1. ESM環境で安全に __dirname を再現
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-// 2. 階層の計算を安全に行う（/server/api/controllers/fallback/ から public まで遡るパス）
-// const publicDir = path.resolve(__dirname, '../../../../../public');
 // 起動ディレクトリ（deploy-render または apiMemo-MongoDB）直下の public を確実に指定
 const publicDir = path.resolve(process.cwd(), 'public');
 const router = express.Router();
